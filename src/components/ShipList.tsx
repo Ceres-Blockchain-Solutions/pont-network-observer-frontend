@@ -14,106 +14,33 @@ import * as ecies25519 from 'ecies-25519';
 export default function ShipList() {
     const { connection } = useConnection();
     const { publicKey, signMessage, sendTransaction } = useWallet();
-    const [shipAccounts, setShipAccounts] = useState<ProgramAccount<{ ship: PublicKey; shipManagement: PublicKey; dataAccounts: PublicKey[]; }>[] | null>(null);
-    const [hasAccess, setHasAccess] = useState<boolean[]>([]);
-    const [unapprovedExternalObservers, setUnapprovedExternalObservers] = useState<boolean[]>([]);
     const navigate = useNavigate();
     const [masterKeyEncrypted, setMasterKeyEncrypted] = useState<number[] | null>(null);
+    // const [shipAccounts, setShipAccounts] = useState<ProgramAccount<{ ship: PublicKey; shipManagement: PublicKey; dataAccounts: PublicKey[]; }>[] | null>(null);
+    // const [hasAccess, setHasAccess] = useState<boolean[]>([]);
+    // const [unapprovedExternalObservers, setUnapprovedExternalObservers] = useState<boolean[]>([]);
 
-    const handleRequestAccess = async (index: number) => {
-        console.log(`Requesting access for ship account at index ${index}`);
-
-        const message = 'SIGN THIS MESSAGE TO GET SEED FOR25199 KEYPAIR';
-        const encodedMessage = new TextEncoder().encode(message);
-        try {
-            if (!signMessage) {
-                console.error('signMessage is undefined');
-                return;
+    // MOCK DATA
+    const [shipAccounts, setShipAccounts] = useState([
+        {
+            publicKey: "mockPublicKey1",
+            account: {
+                ship: "mockShip1",
+                shipManagement: "mockShipManagement1",
+                dataAccounts: ["mockDataAccount1"]
             }
-            const signature = await signMessage(encodedMessage);
-            const encodedSignature = encode(signature);
-            const sk = await blake3(signature);
-            console.log('Signature:', encodedSignature);
-            console.log('Message signed successfully! Your sk: ' + sk);
-
-            const x25519_pk = x25519.getPublicKey(sk);
-
-            console.log('Your x25519 public key:', encode(x25519_pk));
-
-            const shipAccountPublicKey = shipAccounts![index].publicKey;;
-
-            console.log('Ship account address:', shipAccountPublicKey);
-            const shipAccount = await program.account.shipAccount.fetch(shipAccountPublicKey);
-
-            console.log('Ship account:', shipAccount);
-
-            const lastDataAccount = shipAccount.dataAccounts.at(-1)!;
-
-            const [externalObserversAccount] = PublicKey.findProgramAddressSync(
-                [Buffer.from("external_observers_account"), lastDataAccount.toBuffer()],
-                program.programId
-            );
-
-            // Call the externalObserverRequest instruction with x25519_pk
-            const tx = await program.methods
-                .externalObserverRequest(new PublicKey(x25519_pk))
-                .accountsStrict({
-                    dataAccount: lastDataAccount.toString(),
-                    externalObserversAccount: externalObserversAccount.toString(),
-                    externalObserver: publicKey!.toString(),
-                    systemProgram: SystemProgram.programId,
-                })
-                .transaction();
-
-            const txSignature = await sendTransaction(
-                tx,
-                connection,
-                {
-                    skipPreflight: true
-                }
-            );
-
-            console.log("Transaction sent with signature: ", txSignature);
-
-        } catch (error) {
-            console.error('Error signing message:', error);
-            alert('Failed to sign message.');
+        },
+        {
+            publicKey: "mockPublicKey2",
+            account: {
+                ship: "mockShip2",
+                shipManagement: "mockShipManagement2",
+                dataAccounts: []
+            }
         }
-    };
-
-    const handleViewData = async (ship: string) => {
-        const message = 'SIGN THIS MESSAGE TO GET SEED FOR25199 KEYPAIR';
-        const encodedMessage = new TextEncoder().encode(message);
-        let masterKeyDecrypted: Uint8Array | null = null;
-        try {
-            if (!signMessage) {
-                console.error('signMessage is undefined');
-                return;
-            }
-            const signature = await signMessage(encodedMessage);
-            const encodedSignature = encode(signature);
-            const sk = await blake3(signature);
-            console.log('Signature:', encodedSignature);
-            console.log('Message signed successfully! Your sk: ' + sk);
-            console.log('Your x25519 public key:', encode(x25519.getPublicKey(sk)));
-            
-            if (masterKeyEncrypted) {
-                const masterKeyEncryptedUint8Array = new Uint8Array(masterKeyEncrypted);
-                console.log('masterKeyEncryptedUint8Array:', masterKeyEncryptedUint8Array);
-                console.log('skUint8Array:', new Uint8Array(Buffer.from(sk, 'hex')));
-                masterKeyDecrypted = ecies25519.decryptSync(masterKeyEncryptedUint8Array, new Uint8Array(Buffer.from(sk, 'hex')));
-            } else {
-                console.error('masterKeyEncrypted is null');
-            }
-
-        } catch (error) {
-            console.error('Error signing message:', error);
-            alert('Failed to sign message.');
-        }
-
-        console.log(`Viewing data for ship ${ship}`);
-        navigate('/view-data', { state: { ship, masterKeyDecrypted } });
-    };
+    ]);
+    const [hasAccess, setHasAccess] = useState([true, false]);
+    const [unapprovedExternalObservers, setUnapprovedExternalObservers] = useState([false, true]);
 
     useEffect(() => {
         const fetchAllShipAccounts = async () => {
@@ -179,9 +106,112 @@ export default function ShipList() {
             }
         };
 
-        fetchAllShipAccounts();
+        // fetchAllShipAccounts();
 
     }, [program, connection, publicKey]);
+
+    const handleRequestAccess = async (index: number) => {
+        console.log(`Requesting access for ship account at index ${index}`);
+
+        // MOCK IMPLEMENTATION
+        navigate('/view-data', { state: { ship: shipAccounts[index].account.ship, masterKeyDecrypted: new Uint8Array([1, 2, 3, 4]) } });
+        return;
+
+        const message = 'SIGN THIS MESSAGE TO GET SEED FOR25199 KEYPAIR';
+        const encodedMessage = new TextEncoder().encode(message);
+        try {
+            if (!signMessage) {
+                console.error('signMessage is undefined');
+                return;
+            }
+            const signature = await signMessage(encodedMessage);
+            const encodedSignature = encode(signature);
+            const sk = await blake3(signature);
+            console.log('Signature:', encodedSignature);
+            console.log('Message signed successfully! Your sk: ' + sk);
+
+            const x25519_pk = x25519.getPublicKey(sk);
+
+            console.log('Your x25519 public key:', encode(x25519_pk));
+
+            const shipAccountPublicKey = shipAccounts![index].publicKey;;
+
+            console.log('Ship account address:', shipAccountPublicKey);
+            const shipAccount = await program.account.shipAccount.fetch(shipAccountPublicKey);
+
+            console.log('Ship account:', shipAccount);
+
+            const lastDataAccount = shipAccount.dataAccounts.at(-1)!;
+
+            const [externalObserversAccount] = PublicKey.findProgramAddressSync(
+                [Buffer.from("external_observers_account"), lastDataAccount.toBuffer()],
+                program.programId
+            );
+
+            // Call the externalObserverRequest instruction with x25519_pk
+            const tx = await program.methods
+                .externalObserverRequest(new PublicKey(x25519_pk))
+                .accountsStrict({
+                    dataAccount: lastDataAccount.toString(),
+                    externalObserversAccount: externalObserversAccount.toString(),
+                    externalObserver: publicKey!.toString(),
+                    systemProgram: SystemProgram.programId,
+                })
+                .transaction();
+
+            const txSignature = await sendTransaction(
+                tx,
+                connection,
+                {
+                    skipPreflight: true
+                }
+            );
+
+            console.log("Transaction sent with signature: ", txSignature);
+
+        } catch (error) {
+            console.error('Error signing message:', error);
+            alert('Failed to sign message.');
+        }
+    };
+
+    const handleViewData = async (ship: string) => {
+        // MOCK IMPLEMENTATION
+        navigate('/view-data', { state: { ship, masterKeyDecrypted: new Uint8Array([1, 2, 3, 4]) } });
+        return;
+
+        const message = 'SIGN THIS MESSAGE TO GET SEED FOR25199 KEYPAIR';
+        const encodedMessage = new TextEncoder().encode(message);
+        let masterKeyDecrypted: Uint8Array | null = null;
+        try {
+            if (!signMessage) {
+                console.error('signMessage is undefined');
+                return;
+            }
+            const signature = await signMessage(encodedMessage);
+            const encodedSignature = encode(signature);
+            const sk = await blake3(signature);
+            console.log('Signature:', encodedSignature);
+            console.log('Message signed successfully! Your sk: ' + sk);
+            console.log('Your x25519 public key:', encode(x25519.getPublicKey(sk)));
+            
+            if (masterKeyEncrypted) {
+                const masterKeyEncryptedUint8Array = new Uint8Array(masterKeyEncrypted);
+                console.log('masterKeyEncryptedUint8Array:', masterKeyEncryptedUint8Array);
+                console.log('skUint8Array:', new Uint8Array(Buffer.from(sk, 'hex')));
+                masterKeyDecrypted = ecies25519.decryptSync(masterKeyEncryptedUint8Array, new Uint8Array(Buffer.from(sk, 'hex')));
+            } else {
+                console.error('masterKeyEncrypted is null');
+            }
+
+        } catch (error) {
+            console.error('Error signing message:', error);
+            alert('Failed to sign message.');
+        }
+
+        console.log(`Viewing data for ship ${ship}`);
+        navigate('/view-data', { state: { ship, masterKeyDecrypted } });
+    };
 
     // Render the value of the counter
     return (

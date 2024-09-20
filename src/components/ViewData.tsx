@@ -45,8 +45,54 @@ export const decrypt = (ciphertext: string, tag: string, iv: string, key: crypt.
 export default function ViewData() {
     const location = useLocation();
     const [encryptedData, setEncryptedData] = useState<DataItem[]>([]);
-    const [decryptedData, setDecryptedData] = useState<SensorData[]>([]);
+    // const [decryptedData, setDecryptedData] = useState<SensorData[]>([]);
     const { ship, masterKeyDecrypted } = location.state as { ship: string, masterKeyDecrypted: Uint8Array };
+
+    // MOCK
+    const [decryptedData, setDecryptedData] = useState<SensorData[]>([
+        {
+            lat: 37.7749,
+            long: -122.4194,
+            mileage: 1200,
+            engineLoad: 75,
+            fuelLevel: 50,
+            seaState: "Calm",
+            seaSurfaceTemperature: 15,
+            airTemp: 20,
+            humidity: 60,
+            barometricPressure: 1013,
+            cargoStatus: "Loaded",
+            time: Date.now()
+        },
+        {
+            lat: 34.0522,
+            long: -118.2437,
+            mileage: 1500,
+            engineLoad: 80,
+            fuelLevel: 60,
+            seaState: "Moderate",
+            seaSurfaceTemperature: 18,
+            airTemp: 22,
+            humidity: 55,
+            barometricPressure: 1015,
+            cargoStatus: "Unloaded",
+            time: Date.now()
+        },
+        {
+            lat: 40.7128,
+            long: -74.0060,
+            mileage: 1800,
+            engineLoad: 70,
+            fuelLevel: 40,
+            seaState: "Rough",
+            seaSurfaceTemperature: 12,
+            airTemp: 18,
+            humidity: 65,
+            barometricPressure: 1010,
+            cargoStatus: "Loaded",
+            time: Date.now()
+        }
+    ]);
 
     useEffect(() => {
         async function fetchData() {
@@ -75,7 +121,8 @@ export default function ViewData() {
             }
         }
 
-        fetchData();
+        // MOCK
+        // fetchData();
     }, []);
 
     const truncate = (str: string) => {
