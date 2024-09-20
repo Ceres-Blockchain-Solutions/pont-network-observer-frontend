@@ -35,12 +35,12 @@ export default function ShipList() {
             account: {
                 ship: "mockShip2",
                 shipManagement: "mockShipManagement2",
-                dataAccounts: []
+                dataAccounts: ["mockDataAccount1"]
             }
         }
     ]);
-    const [hasAccess, setHasAccess] = useState([true, false]);
-    const [unapprovedExternalObservers, setUnapprovedExternalObservers] = useState([false, true]);
+    const [hasAccess, setHasAccess] = useState([true, true]);
+    const [unapprovedExternalObservers, setUnapprovedExternalObservers] = useState([false, false]);
 
     useEffect(() => {
         const fetchAllShipAccounts = async () => {
