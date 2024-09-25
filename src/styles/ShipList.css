@@ -11,7 +11,7 @@
   box-shadow: 1px 1px 8px 3px rgba(42, 84, 133, 0.12);
   height: min-content;
   width: 100%;
-  max-width: 640px;
+  max-width: 800px;
   margin: 100px auto 0 auto;
   overflow-x: auto;
 }
@@ -58,6 +58,11 @@
 .styled-table .button-container {
   display: flex;
   justify-content: flex-end;
+  /* width: 100%; */
+}
+
+.button-container button {
+  width: 100%;
 }
 
 .styled-table th {
