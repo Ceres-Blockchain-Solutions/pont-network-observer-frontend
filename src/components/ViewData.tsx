@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import "../styles/ShipList.css";
 import { useLocation } from "react-router-dom";
+//  @ts-ignore
 import crypt from "crypto-browserify";
 import { Buffer } from "buffer";
+import { blake3 } from "hash-wasm";
+import { Address } from "@coral-xyz/anchor";
+import { program } from "../anchor/setup";
 
 interface SensorData {
 	lat: number;
@@ -55,10 +59,16 @@ export default function ViewData() {
 	const location = useLocation();
 	const [encryptedData, setEncryptedData] = useState<DataItem[]>([]);
 	const [decryptedData, setDecryptedData] = useState<SensorData[]>([]);
-	const { ship, masterKeyDecrypted } = location.state as {
+	const { ship, masterKeyDecrypted, dataAccountAddreses, dataAccountTimestamps } = location.state as {
 		ship: string;
 		masterKeyDecrypted: Uint8Array;
+		dataAccountAddreses: string[];
+		dataAccountTimestamps: number[];
 	};
+	const [timestamps, setTimestamps] = useState<number[]>(dataAccountTimestamps);
+	const [selectedSailingIndex, setSelectedSailingIndex] = useState<number>(dataAccountTimestamps.length - 1);
+	const [differences, setDifferences] = useState<boolean[]>([]);
+    const [blockchainFingerprints, setBlockchainFingerprints] = useState<string[]>([]);
 
 	// MOCK
 	// const [decryptedData, setDecryptedData] = useState<SensorData[]>([
@@ -106,15 +116,42 @@ export default function ViewData() {
 	//   },
 	// ]);
 
+	useEffect(() => {
+        const fetchFingerprints = async () => {
+            try {
+				console.log("TEST: ", selectedSailingIndex);
+                const fingerprints = await getFingerprints(dataAccountAddreses[selectedSailingIndex]);
+                console.log('Fingerprints:', fingerprints);
+                setBlockchainFingerprints(fingerprints);
+            } catch (error) {
+                console.error('Error fetching fingerprints:', error);
+            }
+        };
+
+        const compareFingerprints = async () => {
+            const diffs = [];
+            for (let i = 0; i < encryptedData.length; i++) {
+                diffs[i] = await isDifferent(encryptedData[i].ciphertext, i);
+            }
+            console.log('Diffs:', diffs);
+            setDifferences(diffs);
+        };
+
+        fetchFingerprints();
+        compareFingerprints();
+    }, [encryptedData]);
+
 	const fetchData = async () => {
 		try {
 			const response = await fetch("http://localhost:5000/api/data");
 			const result = await response.json();
 			// TODO: New Collection for each ship on backend to remove this filter
+			console.log("dataAccountAddreses:", dataAccountAddreses);
+			console.log("selectedSailingIndex:", selectedSailingIndex);
 			const resultFiltered = result.filter(
-				(item: DataItem) => item.ship === ship
+				(item: DataItem) => item.data_account === dataAccountAddreses[selectedSailingIndex]
 			);
-			setEncryptedData(result);
+			setEncryptedData(resultFiltered);
 
 			// Decrypt data
 			const _decryptedData: SensorData[] = resultFiltered.map(
@@ -137,11 +174,6 @@ export default function ViewData() {
 			);
 			console.log("Decrypted data:", _decryptedData);
 			setDecryptedData(_decryptedData);
-
-			// Log decrypted data
-			decryptedData.forEach((item, index) => {
-				console.log(`Decrypted data for ship at index ${index}:`, item);
-			});
 		} catch (error) {
 			console.error("Error fetching data:", error);
 		}
@@ -150,46 +182,44 @@ export default function ViewData() {
 	useEffect(() => {
 		fetchData();
 		const intervalId = setInterval(fetchData, 2000); // Fetch data every 2 seconds
+		console.log("Timestamps: ", timestamps);
 
 		return () => clearInterval(intervalId); // Clear interval on component unmount
-	}, []);
+	}, [selectedSailingIndex]);
+
+	const handleSailingChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+		setSelectedSailingIndex(Number(event.target.value));
+	};
 
 	const truncate = (str: string) => {
 		if (str.length <= 8) return str;
 		return `${str.slice(0, 4)}...${str.slice(-4)}`;
 	};
 
-	// return (
-	//     <div className="table-container">
-	//         <h2 className='ship-accounts-title'>Data View</h2>
-	//         <table className="styled-table">
-	//             <thead>
-	//                 <tr>
-	//                     <th>Ship</th>
-	//                     <th>Fingerprint</th>
-	//                     <th>Ciphertext</th>
-	//                     <th>Tag</th>
-	//                     <th>IV</th>
-	//                     <th>Timestamp</th>
-	//                 </tr>
-	//             </thead>
-	//             <tbody>
-	//                 {encryptedData.map((item, index) => (
-	//                     <tr key={index}>
-	//                         <td>{item.ship}</td>
-	//                         <td>{truncate(item.fingerprint)}</td>
-	//                         <td>{truncate(item.ciphertext)}</td>
-	//                         <td>{truncate(item.tag)}</td>
-	//                         <td>{truncate(item.iv)}</td>
-	//                         <td>{new Date(item.ciphertext_timestamp_unix).toLocaleString()}</td>
-	//                     </tr>
-	//                 ))}
-	//             </tbody>
-	//         </table>
-	//     </div>
-	// );
+	const getFingerprints = async (dataAccountAddress: Address) => {
+        const dataAccount = await program.account.dataAccount.fetch(dataAccountAddress);
+        const fingerprints = dataAccount.fingerprints;
+        return fingerprints.map((fingerprint) => Buffer.from(fingerprint[0]).toString('hex'));
+    };
+	
+	const isDifferent = async (ciphertext: string, index: number) => {
+        const hash = await blake3(Buffer.from(ciphertext, 'hex'));
+        console.log('Hash:', hash, 'Blockchain fingerprint:', blockchainFingerprints[index]);
+        return hash !== blockchainFingerprints[index];
+    };
+
 	return (
 		<div className="main-container">
+			<div className="combo-box-container">
+				<label htmlFor="sailings">Sailing start time:</label>
+				<select id="sailings" value={selectedSailingIndex} onChange={handleSailingChange}>
+					{timestamps.map((timestamp, index) => (
+						<option key={index} value={index}>
+							{new Date(timestamp).toLocaleString()}
+						</option>
+					))}
+				</select>
+			</div>
 			<div className="table-container table-container-lg">
 				{decryptedData.length > 0 && (
 					<table className="styled-table">
@@ -211,7 +241,7 @@ export default function ViewData() {
 						</thead>
 						<tbody>
 							{decryptedData.map((data, index) => (
-								<tr key={index}>
+								<tr key={index} className={differences[index] ? 'red-row' : ''}>
 									<td>{data.lat}</td>
 									<td>{data.long}</td>
 									<td>{data.mileage}</td>

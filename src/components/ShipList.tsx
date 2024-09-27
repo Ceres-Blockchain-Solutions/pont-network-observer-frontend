@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { encode } from "bs58";
 import { blake3 } from "hash-wasm";
-import { program } from "../anchor/setup";
+import { program, ShipAccount } from "../anchor/setup";
 import { ProgramAccount } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { Buffer } from "buffer";
@@ -18,7 +18,7 @@ export default function ShipList() {
   const [masterKeyEncrypted, setMasterKeyEncrypted] = useState<number[] | null>(
     null
   );
-  const [shipAccounts, setShipAccounts] = useState<ProgramAccount<{ ship: PublicKey; shipManagement: PublicKey; dataAccounts: PublicKey[]; }>[] | null>(null);
+  const [shipAccounts, setShipAccounts] = useState<ProgramAccount<ShipAccount>[] | null>(null);
   const [hasAccess, setHasAccess] = useState<boolean[]>([]);
   const [unapprovedExternalObservers, setUnapprovedExternalObservers] = useState<boolean[]>([]);
 
@@ -206,7 +206,7 @@ const fetchAllShipAccounts = async () => {
     }
   };
 
-  const handleViewData = async (ship: string) => {
+  const handleViewData = async (ship: string, dataAccountAddreses: string[], dataAccountTimestamps: number[]) => {
     // // MOCK IMPLEMENTATION
     // navigate("/view-data", {
     //   state: { ship, masterKeyDecrypted: new Uint8Array([1, 2, 3, 4]) },
@@ -252,7 +252,7 @@ const fetchAllShipAccounts = async () => {
     }
 
     console.log(`Viewing data for ship ${ship}`);
-    navigate("/view-data", { state: { ship, masterKeyDecrypted } });
+    navigate("/view-data", { state: { ship, masterKeyDecrypted, dataAccountAddreses, dataAccountTimestamps } });
   };
 
   // Render the value of the counter
@@ -274,7 +274,9 @@ const fetchAllShipAccounts = async () => {
                         <button
                           onClick={async () =>
                             await handleViewData(
-                              account.account.ship.toString()
+                              account.account.ship.toString(),
+                              account.account.dataAccounts.map(pk => pk.toString()),
+                              account.account.dataAccountStartingTimestamps.map((timestamp => timestamp.toNumber()))
                             )
                           }
                         >
