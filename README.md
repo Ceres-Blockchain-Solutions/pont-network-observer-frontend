@@ -1,6 +1,6 @@
 # Pont Network Observer Frontend
 
-This repository contains the code for the Pont Network Observer frontend, providing a user interface for observing stations to request access to data, view data, and verify its integrity.
+This repository contains the code for the Pont Network Observer frontend, which provides a user interface for stations to request access to data, view data, and verify its integrity.
 <br/>
 
 ## Request Access to Data
