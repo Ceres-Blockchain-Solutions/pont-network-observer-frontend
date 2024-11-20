@@ -12,8 +12,6 @@ import "./App.css";
 import ShipList from "./components/ShipList";
 import ViewData from "./components/ViewData";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import crypt from "crypto";
-import { Buffer } from "buffer/"; // <-- no typo here ("/")
 
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -45,7 +43,7 @@ function App() {
             </header>
             <Routes>
               <Route path="/" element={<ShipList />} />
-              <Route path="/" element={<ShipMap />} />
+              <Route path="/view-map" element={<ShipMap />} />
               <Route path="/view-data" element={<ViewData />} />
             </Routes>
           </Router>
