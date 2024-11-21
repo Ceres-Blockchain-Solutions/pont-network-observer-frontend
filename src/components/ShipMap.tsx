@@ -9,7 +9,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 
 export default function ShipMap() {
-  const [shipData, setShipData] = useState<any[]>();
+  const [shipData, setShipData] = useState<any | null>();
   const navigate = useNavigate();
 
   // const positions = [
@@ -37,7 +37,9 @@ export default function ShipMap() {
     await axios
       .get("http://localhost:3000/ship/get-all-ships-decrypted", {})
       .then((response) => {
-        setShipData(response.data);
+				const latest = response.data.length > 0 ? response.data[response.data.length - 1] : null;
+				console.log(latest, "latest");
+        setShipData(latest);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -50,8 +52,6 @@ export default function ShipMap() {
     const interval = setInterval(fetchData, 5000); // Fetch every 5 seconds
     return () => clearInterval(interval); // Cleanup on unmount
   }, []);
-
-  console.log(shipData, "shipdata");
 
   return (
     <div className="map-container">
@@ -69,7 +69,7 @@ export default function ShipMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {shipData &&
+        {/* {shipData &&
           shipData?.map((item: any) => (
             <Marker key={item.id} position={[item.gps.lat, item.gps.long]} icon={customIcon}>
               <Popup>
@@ -94,7 +94,37 @@ export default function ShipMap() {
                 </div>
               </Popup>
             </Marker>
-          ))}
+          ))} */}
+
+				{shipData && (
+          <Marker
+            key={shipData.id}
+            position={[shipData.gps.lat, shipData.gps.long]}
+            icon={customIcon}
+          >
+            <Popup>
+              <div style={{ textAlign: "center" }}>
+                <strong>{shipData.id}</strong>
+                <br />
+                Coordinates: {shipData.gps.lat}, {shipData.gps.long}
+                <br />
+                <button
+                  onClick={() => navigate(`/view-data`)}
+                  style={{
+                    padding: "5px 10px",
+                    backgroundColor: "#6dbddc",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                >
+                  View Info
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        )}
       </MapContainer>
     </div>
   );
