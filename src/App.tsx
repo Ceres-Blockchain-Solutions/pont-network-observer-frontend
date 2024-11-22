@@ -17,6 +17,7 @@ import { Buffer } from "buffer/"; // <-- no typo here ("/")
 
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
+import StakingDashboard from "./components/StakingDashboard";
 
 function App() {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
@@ -45,6 +46,7 @@ function App() {
             <Routes>
               <Route path="/" element={<ShipList />} />
               <Route path="/view-data" element={<ViewData />} />
+              <Route path="/staking-dashboard" element={<StakingDashboard />} />
             </Routes>
           </Router>
         </WalletModalProvider>

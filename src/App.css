@@ -78,6 +78,12 @@ header img {
   flex-direction: column;
 }
 
+.dashboard-button {
+  background-color: transparent;
+  color: #000;
+  font-size: 30px;
+}
+
 @media (max-width: 640px) {
   header img {
     height: 35px;

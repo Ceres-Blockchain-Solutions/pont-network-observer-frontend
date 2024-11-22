@@ -18,34 +18,37 @@ export default function ShipList() {
   const [masterKeyEncrypted, setMasterKeyEncrypted] = useState<number[] | null>(
     null
   );
-  const [shipAccounts, setShipAccounts] = useState<ProgramAccount<ShipAccount>[] | null>(null);
+  const [shipAccounts, setShipAccounts] = useState<
+    ProgramAccount<ShipAccount>[] | null
+  >(null);
   const [hasAccess, setHasAccess] = useState<boolean[]>([]);
-  const [unapprovedExternalObservers, setUnapprovedExternalObservers] = useState<boolean[]>([]);
+  const [unapprovedExternalObservers, setUnapprovedExternalObservers] =
+    useState<boolean[]>([]);
 
   // MOCK DATA
-//   const [shipAccounts, setShipAccounts] = useState([
-//     {
-//       publicKey: "mockPublicKey1",
-//       account: {
-//         ship: "mockShip1",
-//         shipManagement: "mockShipManagement1",
-//         dataAccounts: ["mockDataAccount1"],
-//       },
-//     },
-//     {
-//       publicKey: "mockPublicKey2",
-//       account: {
-//         ship: "mockShip2",
-//         shipManagement: "mockShipManagement2",
-//         dataAccounts: ["mockDataAccount1"],
-//       },
-//     },
-//   ]);
-//   const [hasAccess, setHasAccess] = useState([true, true]);
-//   const [unapprovedExternalObservers, setUnapprovedExternalObservers] =
-//     useState([false, false]);
+  //   const [shipAccounts, setShipAccounts] = useState([
+  //     {
+  //       publicKey: "mockPublicKey1",
+  //       account: {
+  //         ship: "mockShip1",
+  //         shipManagement: "mockShipManagement1",
+  //         dataAccounts: ["mockDataAccount1"],
+  //       },
+  //     },
+  //     {
+  //       publicKey: "mockPublicKey2",
+  //       account: {
+  //         ship: "mockShip2",
+  //         shipManagement: "mockShipManagement2",
+  //         dataAccounts: ["mockDataAccount1"],
+  //       },
+  //     },
+  //   ]);
+  //   const [hasAccess, setHasAccess] = useState([true, true]);
+  //   const [unapprovedExternalObservers, setUnapprovedExternalObservers] =
+  //     useState([false, false]);
 
-const fetchAllShipAccounts = async () => {
+  const fetchAllShipAccounts = async () => {
     try {
       if (!publicKey) {
         console.error("Wallet not connected");
@@ -206,7 +209,11 @@ const fetchAllShipAccounts = async () => {
     }
   };
 
-  const handleViewData = async (ship: string, dataAccountAddreses: string[], dataAccountTimestamps: number[]) => {
+  const handleViewData = async (
+    ship: string,
+    dataAccountAddreses: string[],
+    dataAccountTimestamps: number[]
+  ) => {
     // // MOCK IMPLEMENTATION
     // navigate("/view-data", {
     //   state: { ship, masterKeyDecrypted: new Uint8Array([1, 2, 3, 4]) },
@@ -236,7 +243,10 @@ const fetchAllShipAccounts = async () => {
         );
         console.log("skUint8Array:", new Uint8Array(Buffer.from(sk, "hex")));
 
-        console.log("TEST: ", await ecies25519.encrypt(new Uint8Array(32), x25519.getPublicKey(sk)))
+        console.log(
+          "TEST: ",
+          await ecies25519.encrypt(new Uint8Array(32), x25519.getPublicKey(sk))
+        );
         masterKeyDecrypted = await ecies25519.decrypt(
           masterKeyEncryptedUint8Array,
           new Uint8Array(Buffer.from(sk, "hex"))
@@ -252,12 +262,26 @@ const fetchAllShipAccounts = async () => {
     }
 
     console.log(`Viewing data for ship ${ship}`);
-    navigate("/view-data", { state: { ship, masterKeyDecrypted, dataAccountAddreses, dataAccountTimestamps } });
+    navigate("/view-data", {
+      state: {
+        ship,
+        masterKeyDecrypted,
+        dataAccountAddreses,
+        dataAccountTimestamps,
+      },
+    });
+  };
+
+  const stakingDashboardNavigate = () => {
+    navigate("/staking-dashboard");
   };
 
   // Render the value of the counter
   return (
     <div className="main-container">
+      <button className="dashboard-button" onClick={stakingDashboardNavigate}>
+        Stake
+      </button>
       <div className="table-container">
         <h1 className="ship-accounts-title">Ship Accounts</h1>
         {shipAccounts && shipAccounts.length > 0 ? (
@@ -275,8 +299,12 @@ const fetchAllShipAccounts = async () => {
                           onClick={async () =>
                             await handleViewData(
                               account.account.ship.toString(),
-                              account.account.dataAccounts.map(pk => pk.toString()),
-                              account.account.dataAccountStartingTimestamps.map((timestamp => timestamp.toNumber()))
+                              account.account.dataAccounts.map((pk) =>
+                                pk.toString()
+                              ),
+                              account.account.dataAccountStartingTimestamps.map(
+                                (timestamp) => timestamp.toNumber()
+                              )
                             )
                           }
                         >
