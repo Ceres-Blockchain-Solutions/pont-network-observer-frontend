@@ -484,7 +484,20 @@
         },
         {
           "name": "token_mint",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "system_program",
@@ -872,9 +885,6 @@
           }
         },
         {
-          "name": "recipient"
-        },
-        {
           "name": "mint_account",
           "writable": true,
           "pda": {
@@ -988,7 +998,7 @@
             "seeds": [
               {
                 "kind": "account",
-                "path": "recipient"
+                "path": "fundraising_account"
               },
               {
                 "kind": "const",
@@ -1246,7 +1256,20 @@
         },
         {
           "name": "mint_account",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "sender_token_account",
