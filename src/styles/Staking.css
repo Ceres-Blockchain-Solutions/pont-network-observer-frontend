@@ -1,0 +1,268 @@
+.staking-container {
+  justify-content: start;
+  padding: 80px 30px;
+}
+
+.grid-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-gap: 20px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.my-staking-container {
+  border-radius: 8px;
+  padding: 20px;
+  color: #333;
+  background: #fff;
+  border: 1px solid #dee6f1;
+  box-shadow: 0 0 #0000, 0 0 #0000, 0 4px 8px 0 #eef3fb;
+}
+
+.my-staking-title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.my-staking-wallet {
+  font-size: 12px;
+  font-weight: 500;
+  color: #33333390;
+}
+
+.my-staking-info-container {
+  margin-top: 20px;
+  display: flex;
+  gap: 0 10px;
+}
+
+.my-staking-info-wrapper {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.my-staking-info-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.my-staking-info-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.my-staking-claim-container {
+  margin-top: 20px;
+  background-color: #f5f8fc;
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.my-staking-claim-info-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.my-staking-claim-info-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.my-staking-claim-info-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #717cb9;
+}
+
+.my-staking-actions-container {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px 0;
+}
+
+.my-staking-button-unstake {
+  background: none;
+  color: #f82837;
+}
+
+.info-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
+}
+
+.stake-container {
+  background-color: #f5f8fc;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+
+.stake-info-container {
+  display: flex;
+  flex-direction: column;
+  color: #333;
+  gap: 10px 0;
+  width: 100%;
+  z-index: 1;
+}
+
+.stake-label {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.stake-title {
+  font-size: 36px;
+  margin: 0;
+}
+
+.stake-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stake-lock {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  height: 80px;
+  width: auto;
+  transform: translateY(-50%);
+}
+
+.rewards-container {
+  background-color: #6dbddc;
+}
+
+.rewards-info-container {
+  color: #fff;
+}
+
+.stats-container {
+  grid-column: span 2;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 15px 0;
+}
+
+.stats-info-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 15px;
+}
+
+.stats-info-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 120px;
+}
+
+.stats-info-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stats-info-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.stake-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px 0;
+  color: #333;
+}
+
+.stake-modal-heading-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stake-modal-heading-container h2 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.x-mark {
+  cursor: pointer;
+}
+
+.stake-modal-amount-container {
+  border: 1px solid #dee6f1;
+  padding: 15px;
+  border-radius: 8px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px 0;
+}
+
+.stake-modal-info-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0 20px;
+}
+
+.stake-modal-info-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stake-input-amount {
+  background: none;
+  border: none;
+  outline: none;
+  color: #333;
+  font-size: 24px;
+  font-weight: 600;
+  flex: 1;
+  width: 100%;
+}
+
+.stake-input-amount::placeholder {
+  color: #333;
+}
+
+.stake-max-container {
+  display: flex;
+  align-items: center;
+  gap: 0 5px;
+}
+
+.stake-max-button {
+  background: none;
+  border: 1px solid #717cb9;
+  color: #333;
+  padding: 5px 10px;
+}
+
+.stake-max-button:hover {
+  background-color: #717cb9;
+  color: #fff;
+}
+
+.stake-token-icon {
+  width: 24px;
+  height: auto;
+}
+
+.stake-token-name {
+  font-size: 14px;
+  font-weight: 500;
+}

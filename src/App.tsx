@@ -12,12 +12,15 @@ import "./App.css";
 import ShipList from "./components/ShipList";
 import ViewData from "./components/ViewData";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Modal from "react-modal";
 import crypt from "crypto";
 import { Buffer } from "buffer/"; // <-- no typo here ("/")
 
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
 import StakingDashboard from "./components/StakingDashboard";
+
+Modal.setAppElement("#root");
 
 function App() {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.

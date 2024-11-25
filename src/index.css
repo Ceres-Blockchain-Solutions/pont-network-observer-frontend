@@ -26,9 +26,23 @@
   border: 2px solid white;
 }
 
+/* Chrome, Safari, Edge, and Opera */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  appearance: textfield;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #e0e0e0 white;
+  box-sizing: border-box;
+  margin: 0;
 }
 
 a {
@@ -67,6 +81,42 @@ button {
   background-color: #717cb9;
   cursor: pointer;
   transition: border-color 0.25s;
+}
+
+button[disabled] {
+  color: #fff;
+  cursor: not-allowed;
+}
+
+/*
+	*
+	* react-toastify styles
+	*
+	*/
+
+.Toastify__toast-container {
+  max-width: 1280px;
+  width: auto;
+}
+.Toastify__toast-body {
+  padding: 15px;
+}
+.Toastify__toast-theme--dark {
+  background: #fff;
+  border: 1px solid #dee6f1;
+  box-shadow: 0 0 #0000, 0 0 #0000, 0 4px 8px 0 #eef3fb;
+}
+.Toastify__toast--info {
+  font-size: 16px;
+  color: #333;
+}
+.Toastify__toast--success {
+  font-size: 16px;
+  color: #333;
+}
+.Toastify__toast--error {
+  font-size: 16px;
+  color: #333;
 }
 
 @media (prefers-color-scheme: light) {
