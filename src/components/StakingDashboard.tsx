@@ -3,8 +3,6 @@ import { program } from "../anchor/setup";
 import { web3 } from "@coral-xyz/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
-import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { formatAddress, numberFormat } from "../utils/helpers";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { FaCoins } from "react-icons/fa";
@@ -15,6 +13,8 @@ import "../styles/Staking.css";
 import { FaXmark } from "react-icons/fa6";
 import { showLoadingNotify, updateNotify } from "../utils/toast";
 import { SOLSCAN_URL } from "../constants";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export interface FundraisingAccount {
   startTime: BN;
@@ -94,7 +94,7 @@ function StakeModal({
             <span className="stake-modal-info-label">{`AVAILABLE: ${numberFormat(
               intl,
               availableAmount
-            )} SOL`}</span>
+            )} PONT`}</span>
           </div>
           <div className="stake-modal-info-container">
             <input
@@ -116,7 +116,7 @@ function StakeModal({
                 alt="Solana"
                 className="stake-token-icon"
               />
-              <span className="stake-token-name">SOL</span>
+              <span className="stake-token-name">PONT</span>
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ function UnstakeButton({
 
       try {
         const tx = await program.methods
-          .unstake(amount)
+          .unstake(new BN(amount * LAMPORTS_PER_SOL))
           .accounts({
             recipient: publicKey!,
           })
@@ -221,7 +221,7 @@ function StakeButton({
 
       try {
         const tx = await program.methods
-          .stake(amount)
+          .stake(new BN(amount * LAMPORTS_PER_SOL))
           .accounts({
             sender: publicKey!,
           })
@@ -292,15 +292,38 @@ export default function StakingDashboard() {
         (userInfo) => userInfo.key.toBase58() == publicKey?.toBase58()
       );
 
-    if (userInfo) {
-      const claim =
-        userInfo.amountStaked /
-        (fundRaisingAccount.totalStaked *
-          (fundRaisingAccount.totalFeesCollected -
-            userInfo.totalFeesWhenLastClaimed));
+      if (userInfo) {
+        // Convert the values to BigNumber instances
+        const amountStaked = userInfo.amountStaked;
+        const totalStaked = fundRaisingAccount.totalStaked;
+        const totalFeesCollected = fundRaisingAccount.totalFeesCollected;
+        const totalFeesWhenLastClaimed = userInfo.totalFeesWhenLastClaimed;
+      
+        console.log("Amount staked: ", amountStaked.toString());  // Output amount staked as a string for visibility
+        console.log("Total staked:", totalStaked.toString());  // Output total staked as a string for visibility
+        console.log("Total fees collected: ", totalFeesCollected.toString());  // Output total fees collected as a string for visibility
+        console.log("Total Fees when last claimed:", totalFeesWhenLastClaimed.toString());  // Output total fees when last claimed as a string for visibility
 
-      setClaim(claim);
-    }
+        // Calculate the remaining fees
+        const totalClaimableFeesOfAllUsers = totalFeesCollected.sub(totalFeesWhenLastClaimed);
+      
+        // Calculate the denominator: total staked amount multiplied by remaining fees
+        // const denominator = totalStaked.mul(totalClaimableFeesOfAllUsers);
+      
+        // Check if denominator is not zero to prevent division by zero
+        if (!totalStaked.isZero()) {
+
+          const claim = amountStaked.mul(totalClaimableFeesOfAllUsers).div(totalStaked);
+
+          const claimUi = claim.toNumber() / LAMPORTS_PER_SOL;
+          setClaim(claimUi);
+          
+          console.log("Claim ui: ", claimUi);  // Output claim as a string for visibility
+        } else {
+          console.error('Error: Denominator is zero, cannot calculate claim');
+        }
+      }
+      
   }, [publicKey]);
 
   const fetchAvailableTokens = useCallback(async () => {
@@ -313,7 +336,10 @@ export default function StakingDashboard() {
 
     const selfAssociatedTokenAccount = await getAssociatedTokenAddress(
       mintPDA,
-      publicKey!
+      publicKey!,
+      true,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
     const tokenAccount = await connection.getTokenAccountBalance(
@@ -339,16 +365,19 @@ export default function StakingDashboard() {
       );
 
     if (userInfo) {
-      setStakedTokens(userInfo.amountStaked.toNumber());
+      setStakedTokens(userInfo?.amountStaked.div(new BN(LAMPORTS_PER_SOL)).toNumber());
     }
   }, [publicKey]);
 
   useEffect(() => {
-    if (publicKey) {
-      calculateClaimableAmount();
-      fetchAvailableTokens();
-      fetchStakedTokens();
-    }
+    (async () => {
+      console.log("My sol: ", await connection.getBalance(publicKey!));
+      if (publicKey) {
+        calculateClaimableAmount();
+        fetchAvailableTokens();
+        fetchStakedTokens();
+      }
+    })();
   }, [
     publicKey,
     fetchStakedTokens,
@@ -387,18 +416,17 @@ export default function StakingDashboard() {
     <div className="main-container staking-container">
       <div className="grid-container">
         <div className="my-staking-container">
-          <h2 className="my-staking-title">My SOL Staking</h2>
+          <h2 className="my-staking-title">My PONT Staking</h2>
           {connected && publicKey && (
-            <span className="my-staking-wallet">{`${
-              wallet?.adapter.name ?? ""
-            }: ${formatAddress(publicKey.toBase58())}`}</span>
+            <span className="my-staking-wallet">{`${wallet?.adapter.name ?? ""
+              }: ${formatAddress(publicKey.toBase58())}`}</span>
           )}
           <div className="my-staking-info-container">
             <div className="my-staking-info-wrapper">
               <span className="my-staking-info-label">TOTAL STAKED</span>
               <span className="my-staking-info-title">
                 {stakedTokens
-                  ? `${numberFormat(intl, stakedTokens)} SOL`
+                  ? `${numberFormat(intl, stakedTokens)} PONT`
                   : "--"}
               </span>
             </div>
@@ -406,8 +434,8 @@ export default function StakingDashboard() {
               <span className="my-staking-info-label">AVAILABLE IN WALLET</span>
               <span className="my-staking-info-title">
                 {availableTokens
-                  ? `${numberFormat(intl, availableTokens)} SOL`
-                  : "--"}
+                  ? `${numberFormat(intl, availableTokens)} PONT`
+                  : "0"}
               </span>
             </div>
           </div>
@@ -418,9 +446,8 @@ export default function StakingDashboard() {
                   <span className="my-staking-claim-info-label">
                     CLAIMABLE REWARDS
                   </span>
-                  <span className="my-staking-claim-info-title ">{`${
-                    claim ? numberFormat(intl, claim) : 0
-                  } SOL`}</span>
+                  <span className="my-staking-claim-info-title ">{`${claim ? numberFormat(intl, claim) : 0
+                    } SOL`}</span>
                 </div>
                 <button
                   onClick={() => claimRewards()}
@@ -450,7 +477,7 @@ export default function StakingDashboard() {
           <div className="stake-container">
             <div className="stake-info-container">
               <span className="stake-label">Total Staked</span>
-              <h1 className="stake-title">57,500.25 SOL</h1>
+              <h1 className="stake-title">57,500.25 PONT</h1>
               <span className="stake-subtitle">$1200</span>
             </div>
             <img className="stake-lock" src="/lock.png" alt="Lock" />
@@ -464,19 +491,19 @@ export default function StakingDashboard() {
             <FaCoins className="stake-lock" />
           </div>
           <div className="stake-container stats-container">
-            <span className="stake-label">SOL Stats</span>
+            <span className="stake-label">PONT Stats</span>
             <div className="stats-info-container">
               <div className="stats-info-wrapper">
-                <span className="stats-info-label">SOL PRICE</span>
+                <span className="stats-info-label">PONT PRICE</span>
                 <span className="stats-info-title">$245</span>
               </div>
               <div className="stats-info-wrapper">
                 <span className="stats-info-label">DAILY REWARDS</span>
-                <span className="stats-info-title">5 SOL</span>
+                <span className="stats-info-title">5 PONT</span>
               </div>
               <div className="stats-info-wrapper">
                 <span className="stats-info-label">CIRCULATING SUPPLY</span>
-                <span className="stats-info-title">50,000 SOL</span>
+                <span className="stats-info-title">50,000 PONT</span>
               </div>
             </div>
           </div>
