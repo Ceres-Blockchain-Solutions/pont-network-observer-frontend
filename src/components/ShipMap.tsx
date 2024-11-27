@@ -12,44 +12,61 @@ export default function ShipMap() {
   const [shipData, setShipData] = useState<any | null>();
   const navigate = useNavigate();
 
-  // const positions = [
-  // 	{ id: 1, name: "Ship Alpha", lat: 60, lng: 30 },
-  // 	{ id: 2, name: "Ship Beta", lat: 40, lng: -20 },
-  // 	{ id: 3, name: "Ship Gamma", lat: -10, lng: 50 },
-  // 	{ id: 4, name: "Ship Delta", lat: -25, lng: 15 },
-  // ];
-
   const bounds = L.latLngBounds(
     [-90, -180], // Southwest corner (min lat, min lng)
     [90, 180] // Northeast corner (max lat, max lng)
   );
 
-	// Custom icon with your desired shape/image
-	const customIcon = L.icon({
-		iconUrl: "/arrow.png", // Replace with your custom image URL
-		iconSize: [25, 25], // Size of the icon
-		iconAnchor: [12.5, 12.5], // Anchor point of the icon (centered in this case)
-		popupAnchor: [0, -12.5], // Position of the popup relative to the icon
-	});
+	// // Custom icon with your desired shape/image
+	// const customIcon = L.icon({
+	// 	iconUrl: "/arrow.png", // Replace with your custom image URL
+	// 	iconSize: [25, 25], // Size of the icon
+	// 	iconAnchor: [12.5, 12.5], // Anchor point of the icon (centered in this case)
+	// 	popupAnchor: [0, -12.5], // Position of the popup relative to the icon
+
+	// });
+
+  const shipColors: { [id: string]: string } = {
+    "11111111111111111111111111111111111": "red",
+    "22222222222222222222222222222222222": "blue",
+    "33333333333333333333333333333333333": "green",
+  };
+
+    // Create a dynamic icon based on ship ID
+    
+  const getCustomIcon = (id: string) => {
+    const color = shipColors[id] || "black";
+    return L.divIcon({
+      className: "custom-marker",
+      html: `<div style="background-color:${color}; width: 20px; height: 20px; border-radius: 50%;"></div>`,
+      iconSize: [5, 5],
+      iconAnchor: [10, 10],
+    });
+  };
 
   async function fetchData() {
-    // Fetch data from the backend with axios
-    await axios
-      .get("http://localhost:3000/ship/get-all-ships-decrypted", {})
-      .then((response) => {
-				const latest = response.data.length > 0 ? response.data[response.data.length - 1] : null;
-				console.log(latest, "latest");
-        setShipData(latest);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+    try {
+      const response = await axios.get("http://localhost:3000/ship/get-all-ships-decrypted");
+      const latestShipData = response.data.reduce((uniqueShips: any[], ship: any) => {
+        // Ensure only the latest data for each ship ID is included
+        const existingIndex = uniqueShips.findIndex((s: any) => s.id === ship.id);
+        if (existingIndex >= 0) {
+          uniqueShips[existingIndex] = ship; // Update existing entry
+        } else {
+          uniqueShips.push(ship); // Add new entry
+        }
+        return uniqueShips;
+      }, []);
+      setShipData(latestShipData);
+    } catch (error) {
+      console.error("Error fetching ship data:", error);
+    }
   }
 
   useEffect(() => {
     fetchData();
 
-    const interval = setInterval(fetchData, 5000); // Fetch every 5 seconds
+    const interval = setInterval(fetchData, 1000); // Fetch every 5 seconds
     return () => clearInterval(interval); // Cleanup on unmount
   }, []);
 
@@ -69,17 +86,27 @@ export default function ShipMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {/* {shipData &&
-          shipData?.map((item: any) => (
-            <Marker key={item.id} position={[item.gps.lat, item.gps.long]} icon={customIcon}>
+
+        {shipData &&
+          shipData.map((ship: any) => (
+            <Marker
+              key={ship.id} // Ensure each marker has a unique key based on ship ID
+              position={[ship.gps.lat, ship.gps.long]}
+              // icon={customIcon}
+              icon={getCustomIcon(ship.id)}
+            >
               <Popup>
                 <div style={{ textAlign: "center" }}>
-                  <strong>{item.id}</strong>
+                <strong>
+                  {ship.id.length > 10
+                    ? `${ship.id.slice(0, 4)}...${ship.id.slice(-4)}`
+                    : ship.id}
+                </strong>
                   <br />
-                  Coordinates: {item.gps.lat}, {item.gps.long}
+                  Coordinates: {ship.gps.lat.toFixed(2)}, {ship.gps.long.toFixed(2)}
                   <br />
                   <button
-                    onClick={() => navigate(`/view-data`)}
+                    onClick={() => navigate(`/view-ship-table/${ship.id}`)} // Pass the ship ID to the info page
                     style={{
                       padding: "5px 10px",
                       backgroundColor: "#6dbddc",
@@ -94,37 +121,7 @@ export default function ShipMap() {
                 </div>
               </Popup>
             </Marker>
-          ))} */}
-
-				{shipData && (
-          <Marker
-            key={shipData.id}
-            position={[shipData.gps.lat, shipData.gps.long]}
-            icon={customIcon}
-          >
-            <Popup>
-              <div style={{ textAlign: "center" }}>
-                <strong>{shipData.id}</strong>
-                <br />
-                Coordinates: {shipData.gps.lat}, {shipData.gps.long}
-                <br />
-                <button
-                  onClick={() => navigate(`/view-data`)}
-                  style={{
-                    padding: "5px 10px",
-                    backgroundColor: "#6dbddc",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                >
-                  View Info
-                </button>
-              </div>
-            </Popup>
-          </Marker>
-        )}
+          ))}
       </MapContainer>
     </div>
   );
