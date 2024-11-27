@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "../styles/ShipList.css";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 //  @ts-ignore
 import crypt from "crypto-browserify";
 import { Buffer } from "buffer";
@@ -63,6 +63,8 @@ export const decrypt = (
 
 export default function ViewData() {
 	const location = useLocation();
+	const {id} = useParams();
+	console.log("ID: ", id);
 	const [encryptedBatch, setEncryptedBatch] = useState<DataItem[]>([]);
 	const [decryptedBatch, setDecryptedBatch] = useState<SensorData[]>([]);
 	const { ship, masterKeyDecrypted, dataAccountAddreses, dataAccountTimestamps } = location.state as {

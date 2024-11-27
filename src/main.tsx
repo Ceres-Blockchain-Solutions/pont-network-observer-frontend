@@ -1,9 +1,12 @@
 window.global ||= window;
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { IntlProvider } from "react-intl";
 import { ToastContainer, Zoom } from "react-toastify";
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import "leaflet/dist/leaflet.css";
 
 import "react-toastify/dist/ReactToastify.css";
 import "./index.css";

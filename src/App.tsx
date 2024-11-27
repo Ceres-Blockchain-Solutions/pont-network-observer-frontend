@@ -19,6 +19,8 @@ import { Buffer } from "buffer/"; // <-- no typo here ("/")
 // Default styles that can be overridden by your app
 import "@solana/wallet-adapter-react-ui/styles.css";
 import StakingDashboard from "./components/StakingDashboard";
+import ShipMap from "./components/ShipMap";
+import ViewShipTable from "./components/ViewShipTable";
 
 Modal.setAppElement("#root");
 
@@ -48,8 +50,10 @@ function App() {
             </header>
             <Routes>
               <Route path="/" element={<ShipList />} />
+              <Route path="/view-map" element={<ShipMap />} />
               <Route path="/view-data" element={<ViewData />} />
               <Route path="/staking-dashboard" element={<StakingDashboard />} />
+              <Route path="/view-ship-table/:id" element={<ViewShipTable />} />
             </Routes>
           </Router>
         </WalletModalProvider>
