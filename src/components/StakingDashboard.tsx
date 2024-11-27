@@ -11,10 +11,18 @@ import { useIntl } from "react-intl";
 
 import "../styles/Staking.css";
 import { FaXmark } from "react-icons/fa6";
-import { showLoadingNotify, updateNotify } from "../utils/toast";
+import {
+  showErrorNotify,
+  showLoadingNotify,
+  updateNotify,
+} from "../utils/toast";
 import { SOLSCAN_URL } from "../constants";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 
 export interface FundraisingAccount {
   startTime: BN;
@@ -130,6 +138,42 @@ function StakeModal({
         >
           {loading ? "Pending transaction" : title}
         </button>
+      </div>
+    </Modal>
+  );
+}
+
+function ClaimModal({
+  isOpen,
+  closeModal,
+  txSignature,
+}: {
+  isOpen: boolean;
+  closeModal: () => void;
+  txSignature: string;
+}) {
+  return (
+    <Modal isOpen={isOpen} style={modalStyle} onRequestClose={closeModal}>
+      <div className="stake-modal-container">
+        <div className="stake-modal-heading-container">
+          <div></div>
+          <FaXmark size={24} className="x-mark" onClick={() => closeModal()} />
+        </div>
+        <div className="claim-modal-success-container">
+          <img src="/success.svg" alt="Tx success" />
+          <h2>Transaction success</h2>
+        </div>
+        <div className="claim-modal-success-button-container">
+          <button className="claim-modal-btn" onClick={() => closeModal()}>
+            Close
+          </button>
+          <a
+            href={`${SOLSCAN_URL}/${txSignature}/?cluster=devnet`}
+            className="claim-modal-btn claim-modal-link"
+          >
+            View on Explorer
+          </a>
+        </div>
       </div>
     </Modal>
   );
@@ -266,18 +310,77 @@ function StakeButton({
   );
 }
 
+function ClaimButton({
+  claim,
+  onClaimCallback,
+}: {
+  claim: number | undefined;
+  onClaimCallback: () => Promise<void>;
+}) {
+  const { publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection();
+
+  const [txSignature, setTxSignature] = useState<string | null>(null);
+  const [pendingTx, setPendingTx] = useState(false);
+
+  const claimRewards = useCallback(async () => {
+    setPendingTx(true);
+
+    try {
+      const tx = await program.methods
+        .claimRewards()
+        .accounts({
+          user: publicKey!,
+        })
+        .transaction();
+
+      const transactionSignature = await sendTransaction(tx, connection, {
+        skipPreflight: true,
+      });
+
+      await onClaimCallback();
+      setTxSignature(transactionSignature);
+      setPendingTx(false);
+    } catch {
+      showErrorNotify("Transaction failed");
+      setPendingTx(false);
+    }
+  }, [connection, publicKey, sendTransaction, onClaimCallback]);
+
+  return (
+    <>
+      <button
+        onClick={() => claimRewards()}
+        disabled={claim === undefined || claim === 0 || pendingTx}
+      >
+        {pendingTx ? "Pending tx" : "Claim"}
+      </button>
+      <ClaimModal
+        isOpen={txSignature !== null}
+        closeModal={() => setTxSignature(null)}
+        txSignature={txSignature ?? ""}
+      />
+    </>
+  );
+}
+
 export default function StakingDashboard() {
-  const { publicKey, connected, wallet, sendTransaction } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const { setVisible } = useWalletModal();
   const [claim, setClaim] = useState<number | undefined>();
+  const [balance, setBalance] = useState<number | undefined>();
   const [availableTokens, setAvailableTokens] = useState<number | undefined>();
   const [stakedTokens, setStakedTokens] = useState<number | undefined>();
   const { connection } = useConnection();
 
   const intl = useIntl();
 
-  const calculateClaimableAmount = useCallback(async () => {
+  const calculateClaimableAmountAndBalance = useCallback(async () => {
     const seed = Buffer.from("fundraising");
+
+    // Get the user's wallet balance
+    const walletBalance = await connection.getBalance(publicKey!);
+    setBalance(walletBalance / LAMPORTS_PER_SOL);
 
     const [fundRaisingPDA] = web3.PublicKey.findProgramAddressSync(
       [seed],
@@ -292,39 +395,32 @@ export default function StakingDashboard() {
         (userInfo) => userInfo.key.toBase58() == publicKey?.toBase58()
       );
 
-      if (userInfo) {
-        // Convert the values to BigNumber instances
-        const amountStaked = userInfo.amountStaked;
-        const totalStaked = fundRaisingAccount.totalStaked;
-        const totalFeesCollected = fundRaisingAccount.totalFeesCollected;
-        const totalFeesWhenLastClaimed = userInfo.totalFeesWhenLastClaimed;
-      
-        console.log("Amount staked: ", amountStaked.toString());  // Output amount staked as a string for visibility
-        console.log("Total staked:", totalStaked.toString());  // Output total staked as a string for visibility
-        console.log("Total fees collected: ", totalFeesCollected.toString());  // Output total fees collected as a string for visibility
-        console.log("Total Fees when last claimed:", totalFeesWhenLastClaimed.toString());  // Output total fees when last claimed as a string for visibility
+    if (userInfo) {
+      // Convert the values to BigNumber instances
+      const amountStaked = userInfo.amountStaked;
+      const totalStaked = fundRaisingAccount.totalStaked;
+      const totalFeesCollected = fundRaisingAccount.totalFeesCollected;
+      const totalFeesWhenLastClaimed = userInfo.totalFeesWhenLastClaimed;
 
-        // Calculate the remaining fees
-        const totalClaimableFeesOfAllUsers = totalFeesCollected.sub(totalFeesWhenLastClaimed);
-      
-        // Calculate the denominator: total staked amount multiplied by remaining fees
-        // const denominator = totalStaked.mul(totalClaimableFeesOfAllUsers);
-      
-        // Check if denominator is not zero to prevent division by zero
-        if (!totalStaked.isZero()) {
+      const totalClaimableFeesOfAllUsers = totalFeesCollected.sub(
+        totalFeesWhenLastClaimed
+      );
 
-          const claim = amountStaked.mul(totalClaimableFeesOfAllUsers).div(totalStaked);
+      // Calculate the denominator: total staked amount multiplied by remaining fees
+      // const denominator = totalStaked.mul(totalClaimableFeesOfAllUsers);
 
-          const claimUi = claim.toNumber() / LAMPORTS_PER_SOL;
-          setClaim(claimUi);
-          
-          console.log("Claim ui: ", claimUi);  // Output claim as a string for visibility
-        } else {
-          console.error('Error: Denominator is zero, cannot calculate claim');
-        }
+      // Check if denominator is not zero to prevent division by zero
+      if (!totalStaked.isZero()) {
+        const claim = amountStaked
+          .mul(totalClaimableFeesOfAllUsers)
+          .div(totalStaked);
+
+        setClaim(claim.toNumber() / LAMPORTS_PER_SOL);
+      } else {
+        setClaim(0);
       }
-      
-  }, [publicKey]);
+    }
+  }, [connection, publicKey]);
 
   const fetchAvailableTokens = useCallback(async () => {
     const seed = Buffer.from("mint");
@@ -365,52 +461,24 @@ export default function StakingDashboard() {
       );
 
     if (userInfo) {
-      setStakedTokens(userInfo?.amountStaked.div(new BN(LAMPORTS_PER_SOL)).toNumber());
+      setStakedTokens(
+        userInfo?.amountStaked.div(new BN(LAMPORTS_PER_SOL)).toNumber()
+      );
     }
   }, [publicKey]);
 
   useEffect(() => {
-    (async () => {
-      console.log("My sol: ", await connection.getBalance(publicKey!));
-      if (publicKey) {
-        calculateClaimableAmount();
-        fetchAvailableTokens();
-        fetchStakedTokens();
-      }
-    })();
+    if (publicKey) {
+      calculateClaimableAmountAndBalance();
+      fetchAvailableTokens();
+      fetchStakedTokens();
+    }
   }, [
     publicKey,
     fetchStakedTokens,
     fetchAvailableTokens,
-    calculateClaimableAmount,
+    calculateClaimableAmountAndBalance,
   ]);
-
-  const claimRewards = useCallback(async () => {
-    const toastId = showLoadingNotify();
-
-    try {
-      const tx = await program.methods
-        .claimRewards()
-        .accounts({
-          user: publicKey!,
-        })
-        .transaction();
-
-      const txSignature = await sendTransaction(tx, connection, {
-        skipPreflight: true,
-      });
-
-      updateNotify(
-        toastId,
-        "Claimed successfully, click here to check this transaction on Solscan",
-        "success",
-        () =>
-          window.open(`${SOLSCAN_URL}/${txSignature}/?cluster=devnet`, "_blank")
-      );
-    } catch {
-      updateNotify(toastId, "Transaction failed", "error");
-    }
-  }, [connection, publicKey, sendTransaction]);
 
   return (
     <div className="main-container staking-container">
@@ -418,8 +486,9 @@ export default function StakingDashboard() {
         <div className="my-staking-container">
           <h2 className="my-staking-title">My PONT Staking</h2>
           {connected && publicKey && (
-            <span className="my-staking-wallet">{`${wallet?.adapter.name ?? ""
-              }: ${formatAddress(publicKey.toBase58())}`}</span>
+            <span className="my-staking-wallet">{`${
+              wallet?.adapter.name ?? ""
+            }: ${formatAddress(publicKey.toBase58())}`}</span>
           )}
           <div className="my-staking-info-container">
             <div className="my-staking-info-wrapper">
@@ -427,7 +496,13 @@ export default function StakingDashboard() {
               <span className="my-staking-info-title">
                 {stakedTokens
                   ? `${numberFormat(intl, stakedTokens)} PONT`
-                  : "--"}
+                  : "0 PONT"}
+              </span>
+            </div>
+            <div className="my-staking-info-wrapper">
+              <span className="my-staking-info-label">Balance</span>
+              <span className="my-staking-info-title">
+                {balance ? `${numberFormat(intl, balance)} SOL` : "0 SOL"}
               </span>
             </div>
             <div className="my-staking-info-wrapper">
@@ -435,7 +510,7 @@ export default function StakingDashboard() {
               <span className="my-staking-info-title">
                 {availableTokens
                   ? `${numberFormat(intl, availableTokens)} PONT`
-                  : "0"}
+                  : "0 PONT"}
               </span>
             </div>
           </div>
@@ -446,15 +521,14 @@ export default function StakingDashboard() {
                   <span className="my-staking-claim-info-label">
                     CLAIMABLE REWARDS
                   </span>
-                  <span className="my-staking-claim-info-title ">{`${claim ? numberFormat(intl, claim) : 0
-                    } SOL`}</span>
+                  <span className="my-staking-claim-info-title ">{`${
+                    claim ? numberFormat(intl, claim) : 0
+                  } SOL`}</span>
                 </div>
-                <button
-                  onClick={() => claimRewards()}
-                  disabled={claim === undefined || claim === 0}
-                >
-                  Claim
-                </button>
+                <ClaimButton
+                  claim={claim}
+                  onClaimCallback={() => calculateClaimableAmountAndBalance()}
+                />
               </div>
               <div className="my-staking-actions-container">
                 <StakeButton

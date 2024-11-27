@@ -1,5 +1,14 @@
 import { Id, Slide, toast, TypeOptions } from "react-toastify";
 
+export const showErrorNotify = (msg: string) =>
+  toast.error(msg, {
+    position: "bottom-right",
+    closeOnClick: true,
+    closeButton: true,
+    autoClose: 4000,
+    hideProgressBar: false,
+  });
+
 export const showLoadingNotify = () =>
   toast.info("Transaction in progress...", {
     position: "bottom-right",
