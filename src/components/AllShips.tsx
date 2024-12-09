@@ -41,30 +41,32 @@ export default function AllShips() {
     <div className="ship-list-container">
       <h1>All Ships</h1>
       <div className="ship-card-grid">
-        {shipData ? (
-          shipData.map((ship: any) => (
-            <div className="ship-card" key={ship.id} onClick={() => navigate(`/ship/${ship.id}`)}>
-              <div className="ship-card-header">
-                <h2>Ship ID: {ship.id.slice(0, 4)}...{ship.id.slice(-4)}</h2>
-              </div>
-              <div className="ship-card-body">
-                <p><strong>Latitude:</strong> {ship.lat}</p>
-                <p><strong>Longitude:</strong> {ship.lng}</p>
-                <p><strong>Color:</strong> <span style={{ color: ship.color }}>{ship.color}</span></p>
-              </div>
-              <div className="ship-card-footer">
-                <button onClick={(e) => {
-                  e.stopPropagation(); 
-                  navigate(`/ship/${ship.id}`);
-                }}>
-                  View Details
-                </button>
-              </div>
+      {shipData ? (
+        shipData.map((ship: any, index: number) => (
+          <div className="ship-card" key={ship.id} onClick={() => navigate(`/ship/${ship.id}`)}>
+            <div className="ship-card-header">
+              <h2>Ship ID: {ship.id.slice(0, 4)}...{ship.id.slice(-4)}</h2>
             </div>
-          ))
-        ) : (
-          <p>Loading ships...</p>
-        )}
+            <div className="ship-card-image">
+              <img
+                src={`./public/images/ship${index + 1}.png`} // Assuming ship images are named ship1.png, ship2.png, etc.
+                alt={`Ship ${index + 1}`}
+                className="ship-image"
+              />
+            </div>
+            <div className="ship-card-footer">
+              <button onClick={(e) => {
+                e.stopPropagation(); 
+                navigate(`/ship/${ship.id}`);
+              }}>
+                View Details
+              </button>
+            </div>
+          </div>
+        ))
+      ) : (
+        <p>Loading ships...</p>
+      )}
       </div>
     </div>
   );
