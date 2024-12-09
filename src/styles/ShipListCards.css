@@ -1,0 +1,53 @@
+.ship-list-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.ship-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.ship-card {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.ship-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ship-card-header {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+  background: #e9ecef;
+}
+
+.ship-card-body {
+  padding: 15px;
+}
+
+.ship-card-footer {
+  padding: 15px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.ship-card-footer button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.ship-card-footer button:hover {
+  background: #0056b3;
+}
